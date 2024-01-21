@@ -27,19 +27,19 @@ func main() {
 		}
 
 		// An ECS cluster to deploy into
-		cluster, err := ecs.NewCluster(ctx, "cluster", nil)
+		cluster, err := ecs.NewCluster(ctx, "go-fargate-cluster", nil)
 		if err != nil {
 			return err
 		}
 
 		// An ALB to serve the container endpoint to the internet
-		loadbalancer, err := lbx.NewApplicationLoadBalancer(ctx, "loadbalancer", nil)
+		loadbalancer, err := lbx.NewApplicationLoadBalancer(ctx, "go-fargate-lb", nil)
 		if err != nil {
 			return err
 		}
 
 		// An ECR repository to store our application's container image
-		repo, err := ecrx.NewRepository(ctx, "repo", &ecrx.RepositoryArgs{
+		repo, err := ecrx.NewRepository(ctx, "go-fargate-repo", &ecrx.RepositoryArgs{
 			ForceDelete: pulumi.Bool(true),
 		})
 		if err != nil {
@@ -47,7 +47,7 @@ func main() {
 		}
 
 		// Build and publish our application's container image from ./app to the ECR repository
-		image, err := ecrx.NewImage(ctx, "image", &ecr.ImageArgs{
+		image, err := ecrx.NewImage(ctx, "go-fargate-image", &ecr.ImageArgs{
 			RepositoryUrl: repo.Url,
 			Context:       pulumi.String("./app"),
 			Platform:      pulumi.String("linux/amd64"),
@@ -57,7 +57,7 @@ func main() {
 		}
 
 		// Deploy an ECS Service on Fargate to host the application container
-		_, err = ecsx.NewFargateService(ctx, "service", &ecsx.FargateServiceArgs{
+		_, err = ecsx.NewFargateService(ctx, "go-fargate-service", &ecsx.FargateServiceArgs{
 			Cluster:        cluster.Arn,
 			AssignPublicIp: pulumi.Bool(true),
 			TaskDefinitionArgs: &ecsx.FargateServiceTaskDefinitionArgs{
