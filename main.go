@@ -97,7 +97,7 @@ func main() {
 					securityGroup.ID(),
 				},
 			},
-			AssignPublicIp: pulumi.Bool(true),
+			// AssignPublicIp: pulumi.Bool(true),
 			TaskDefinitionArgs: &ecsx.FargateServiceTaskDefinitionArgs{
 				RuntimePlatform: &ecs.TaskDefinitionRuntimePlatformArgs{
 					// required to ARM64 tasks on Fargate
