@@ -1,7 +1,9 @@
 package main
 
 import (
+	awsec2 "github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ec2"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ecs"
+	"github.com/pulumi/pulumi-awsx/sdk/v2/go/awsx/ec2"
 	"github.com/pulumi/pulumi-awsx/sdk/v2/go/awsx/ecr"
 	ecrx "github.com/pulumi/pulumi-awsx/sdk/v2/go/awsx/ecr"
 	ecsx "github.com/pulumi/pulumi-awsx/sdk/v2/go/awsx/ecs"
@@ -24,6 +26,33 @@ func main() {
 		memory := 128
 		if param := cfg.GetInt("memory"); param != 0 {
 			memory = param
+		}
+
+		// create a new vpc with default configuration
+		vpc, err := ec2.NewVpc(ctx, "vpc", nil)
+		if err != nil {
+			return err
+		}
+
+		// create a new security group for our cluster
+		securityGroup, err := awsec2.NewSecurityGroup(ctx, "securityGroup", &awsec2.SecurityGroupArgs{
+			VpcId: vpc.VpcId,
+			Egress: awsec2.SecurityGroupEgressArray{
+				&awsec2.SecurityGroupEgressArgs{
+					FromPort: pulumi.Int(0),
+					ToPort:   pulumi.Int(0),
+					Protocol: pulumi.String("-1"),
+					CidrBlocks: pulumi.StringArray{
+						pulumi.String("0.0.0.0/0"),
+					},
+					Ipv6CidrBlocks: pulumi.StringArray{
+						pulumi.String("::/0"),
+					},
+				},
+			},
+		})
+		if err != nil {
+			return err
 		}
 
 		// An ECS cluster to deploy into
@@ -61,7 +90,13 @@ func main() {
 
 		// Deploy an ECS Service on Fargate to host the application container
 		_, err = ecsx.NewFargateService(ctx, "go-fargate-service", &ecsx.FargateServiceArgs{
-			Cluster:        cluster.Arn,
+			Cluster: cluster.Arn,
+			NetworkConfiguration: &ecs.ServiceNetworkConfigurationArgs{
+				Subnets: vpc.PrivateSubnetIds,
+				SecurityGroups: pulumi.StringArray{
+					securityGroup.ID(),
+				},
+			},
 			AssignPublicIp: pulumi.Bool(true),
 			TaskDefinitionArgs: &ecsx.FargateServiceTaskDefinitionArgs{
 				RuntimePlatform: &ecs.TaskDefinitionRuntimePlatformArgs{
