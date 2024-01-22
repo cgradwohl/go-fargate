@@ -47,10 +47,13 @@ func main() {
 		}
 
 		// Build and publish our application's container image from ./app to the ECR repository
-		image, err := ecrx.NewImage(ctx, "go-fargate-image", &ecr.ImageArgs{
+		// Linux tasks with the ARM64 architecture don't support the Fargate Spot capacity provider.
+		// For the Fargate launch type, the following AWS Regions do not support 64-bit ARM workloads:
+		// 		US East (N. Virginia), the use1-az3 Availability Zone
+		image, err := ecrx.NewImage(ctx, "go-fargate-arm-image", &ecr.ImageArgs{
 			RepositoryUrl: repo.Url,
 			Context:       pulumi.String("./app"),
-			Platform:      pulumi.String("linux/amd64"),
+			Platform:      pulumi.String("linux/arm64"),
 		})
 		if err != nil {
 			return err
@@ -61,6 +64,12 @@ func main() {
 			Cluster:        cluster.Arn,
 			AssignPublicIp: pulumi.Bool(true),
 			TaskDefinitionArgs: &ecsx.FargateServiceTaskDefinitionArgs{
+				RuntimePlatform: &ecs.TaskDefinitionRuntimePlatformArgs{
+					// required to ARM64 tasks on Fargate
+					// you cannot ONLY specify the image definition
+					OperatingSystemFamily: pulumi.String("LINUX"),
+					CpuArchitecture:       pulumi.String("ARM64"),
+				},
 				Container: &ecsx.TaskDefinitionContainerDefinitionArgs{
 					Name:      pulumi.String("app"),
 					Image:     image.ImageUri,
