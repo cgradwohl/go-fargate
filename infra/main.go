@@ -13,9 +13,9 @@ import (
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		cfg := config.New(ctx, "")
-		containerPort := 80
-		if param := cfg.GetInt("containerPort"); param != 0 {
-			containerPort = param
+		appContainerPort := 8080
+		if param := cfg.GetInt("appContainerPort"); param != 0 {
+			appContainerPort = param
 		}
 		cpu := 512
 		if param := cfg.GetInt("cpu"); param != 0 {
@@ -60,7 +60,13 @@ func main() {
 		}
 
 		// An ALB to serve the container endpoint to the internet
-		loadbalancer, err := lbx.NewApplicationLoadBalancer(ctx, "go-fargate-lb", nil)
+		loadbalancer, err := lbx.NewApplicationLoadBalancer(ctx, "go-fargate-lb", &lbx.ApplicationLoadBalancerArgs{
+			DefaultTargetGroup: &lbx.TargetGroupArgs{
+				// NOTE: when changing the application port, you need to change the target group port as well, which is the Port on which targets (ECS Task) receive traffic
+				Port:     pulumi.Int(appContainerPort),
+				Protocol: pulumi.String("HTTP"),
+			},
+		})
 		if err != nil {
 			return err
 		}
@@ -112,7 +118,7 @@ func main() {
 					Essential: pulumi.Bool(true),
 					PortMappings: ecsx.TaskDefinitionPortMappingArray{
 						&ecsx.TaskDefinitionPortMappingArgs{
-							ContainerPort: pulumi.Int(containerPort),
+							ContainerPort: pulumi.Int(appContainerPort),
 							TargetGroup:   loadbalancer.DefaultTargetGroup,
 						},
 					},

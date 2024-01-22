@@ -1,6 +1,8 @@
-run:
-	# @templ generate
-	cd app && docker compose up --build
+.PHONY: app infra
 
-deploy_infra:
-	cd infra && pulumi up
+app:
+	# @templ generate
+		cd app && docker compose up --build
+
+infra:
+		cd infra && pulumi up
