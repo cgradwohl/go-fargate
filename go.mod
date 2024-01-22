@@ -45,7 +45,8 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
-	github.com/mattn/go-isatty v0.0.18 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
@@ -82,7 +83,7 @@ require (
 	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/mod v0.13.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sync v0.4.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/term v0.15.0 // indirect
