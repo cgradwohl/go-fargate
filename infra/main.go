@@ -1,9 +1,7 @@
 package main
 
 import (
-	awsec2 "github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ec2"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ecs"
-	"github.com/pulumi/pulumi-awsx/sdk/v2/go/awsx/ec2"
 	"github.com/pulumi/pulumi-awsx/sdk/v2/go/awsx/ecr"
 	ecrx "github.com/pulumi/pulumi-awsx/sdk/v2/go/awsx/ecr"
 	ecsx "github.com/pulumi/pulumi-awsx/sdk/v2/go/awsx/ecs"
@@ -29,31 +27,31 @@ func main() {
 		}
 
 		// create a new vpc with default configuration
-		vpc, err := ec2.NewVpc(ctx, "vpc", nil)
-		if err != nil {
-			return err
-		}
+		// vpc, err := ec2.NewVpc(ctx, "vpc", nil)
+		// if err != nil {
+		// 	return err
+		// }
 
-		// create a new security group for our cluster
-		securityGroup, err := awsec2.NewSecurityGroup(ctx, "securityGroup", &awsec2.SecurityGroupArgs{
-			VpcId: vpc.VpcId,
-			Egress: awsec2.SecurityGroupEgressArray{
-				&awsec2.SecurityGroupEgressArgs{
-					FromPort: pulumi.Int(0),
-					ToPort:   pulumi.Int(0),
-					Protocol: pulumi.String("-1"),
-					CidrBlocks: pulumi.StringArray{
-						pulumi.String("0.0.0.0/0"),
-					},
-					Ipv6CidrBlocks: pulumi.StringArray{
-						pulumi.String("::/0"),
-					},
-				},
-			},
-		})
-		if err != nil {
-			return err
-		}
+		// // create a new security group for our cluster
+		// securityGroup, err := awsec2.NewSecurityGroup(ctx, "securityGroup", &awsec2.SecurityGroupArgs{
+		// 	VpcId: vpc.VpcId,
+		// 	Egress: awsec2.SecurityGroupEgressArray{
+		// 		&awsec2.SecurityGroupEgressArgs{
+		// 			FromPort: pulumi.Int(0),
+		// 			ToPort:   pulumi.Int(0),
+		// 			Protocol: pulumi.String("-1"),
+		// 			CidrBlocks: pulumi.StringArray{
+		// 				pulumi.String("0.0.0.0/0"),
+		// 			},
+		// 			Ipv6CidrBlocks: pulumi.StringArray{
+		// 				pulumi.String("::/0"),
+		// 			},
+		// 		},
+		// 	},
+		// })
+		// if err != nil {
+		// 	return err
+		// }
 
 		// An ECS cluster to deploy into
 		cluster, err := ecs.NewCluster(ctx, "go-fargate-cluster", nil)
@@ -81,7 +79,7 @@ func main() {
 		// 		US East (N. Virginia), the use1-az3 Availability Zone
 		image, err := ecrx.NewImage(ctx, "go-fargate-arm-image", &ecr.ImageArgs{
 			RepositoryUrl: repo.Url,
-			Context:       pulumi.String("./app"),
+			Context:       pulumi.String("../app"),
 			Platform:      pulumi.String("linux/arm64"),
 		})
 		if err != nil {
@@ -91,13 +89,14 @@ func main() {
 		// Deploy an ECS Service on Fargate to host the application container
 		_, err = ecsx.NewFargateService(ctx, "go-fargate-service", &ecsx.FargateServiceArgs{
 			Cluster: cluster.Arn,
-			NetworkConfiguration: &ecs.ServiceNetworkConfigurationArgs{
-				Subnets: vpc.PrivateSubnetIds,
-				SecurityGroups: pulumi.StringArray{
-					securityGroup.ID(),
-				},
-			},
-			// AssignPublicIp: pulumi.Bool(true),
+			//  NOTE: you need either NeteorkConfiguration or AssignPublicIp defined
+			// NetworkConfiguration: &ecs.ServiceNetworkConfigurationArgs{
+			// 	Subnets: vpc.PrivateSubnetIds,
+			// 	SecurityGroups: pulumi.StringArray{
+			// 		securityGroup.ID(),
+			// 	},
+			// },
+			AssignPublicIp: pulumi.Bool(true),
 			TaskDefinitionArgs: &ecsx.FargateServiceTaskDefinitionArgs{
 				RuntimePlatform: &ecs.TaskDefinitionRuntimePlatformArgs{
 					// required to ARM64 tasks on Fargate
