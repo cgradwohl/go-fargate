@@ -99,8 +99,8 @@ func main() {
 			AssignPublicIp: pulumi.Bool(true),
 			TaskDefinitionArgs: &ecsx.FargateServiceTaskDefinitionArgs{
 				RuntimePlatform: &ecs.TaskDefinitionRuntimePlatformArgs{
-					// required to ARM64 tasks on Fargate
-					// you cannot ONLY specify the image definition
+					// required for ARM64 tasks on Fargate
+					// you cannot ONLY specify linux/arm in the image definition, you also need to define the runtime platform on the ECS service
 					OperatingSystemFamily: pulumi.String("LINUX"),
 					CpuArchitecture:       pulumi.String("ARM64"),
 				},
